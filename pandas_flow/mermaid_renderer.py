@@ -31,6 +31,7 @@ THEMES = {
         "border": "#cccccc",
         "arrow": "#666666",
         "title_bg": "#f0f0f0",
+        "use_colors": True,
     },
     "dark": {
         "background": "#1a1a2e",
@@ -38,6 +39,7 @@ THEMES = {
         "border": "#4a4a6a",
         "arrow": "#8a8aaa",
         "title_bg": "#16213e",
+        "use_colors": True,
     },
     "light": {
         "background": "#fafafa",
@@ -45,6 +47,37 @@ THEMES = {
         "border": "#e0e0e0",
         "arrow": "#888888",
         "title_bg": "#f5f5f5",
+        "use_colors": True,
+    },
+    "minimal": {
+        "background": "#ffffff",
+        "text": "#333333",
+        "border": "#999999",
+        "arrow": "#666666",
+        "title_bg": "#f0f0f0",
+        "use_colors": False,
+        "node_fill": "#f5f5f5",
+        "node_stroke": "#666666",
+    },
+    "monochrome": {
+        "background": "#ffffff",
+        "text": "#000000",
+        "border": "#000000",
+        "arrow": "#000000",
+        "title_bg": "#ffffff",
+        "use_colors": False,
+        "node_fill": "#ffffff",
+        "node_stroke": "#000000",
+    },
+    "grayscale": {
+        "background": "#fafafa",
+        "text": "#333333",
+        "border": "#888888",
+        "arrow": "#555555",
+        "title_bg": "#eeeeee",
+        "use_colors": False,
+        "node_fill": "#e8e8e8",
+        "node_stroke": "#888888",
     },
 }
 
@@ -59,6 +92,8 @@ class MermaidRenderer:
     - Connection arrows showing data flow
     - Legend for operation types
     - Multiple output formats (Markdown, HTML)
+    - Merge operations show both input DataFrames
+    - Filter/Drop operations show removed data
     """
     
     def __init__(self, theme: str = "default"):
@@ -66,7 +101,7 @@ class MermaidRenderer:
         Initialize the renderer.
         
         Args:
-            theme: Color theme ("default", "dark", "light")
+            theme: Color theme ("default", "dark", "light", "minimal", "monochrome", "grayscale")
         """
         self.theme = THEMES.get(theme, THEMES["default"])
         self.theme_name = theme
@@ -78,6 +113,8 @@ class MermaidRenderer:
         direction: str = "TB",
         include_legend: bool = True,
         include_stats: bool = True,
+        show_removed_data: bool = True,
+        show_merge_inputs: bool = True,
     ) -> str:
         """
         Render events as Mermaid flowchart code.
@@ -88,6 +125,8 @@ class MermaidRenderer:
             direction: Flow direction (TB, LR, BT, RL)
             include_legend: Whether to include operation type legend
             include_stats: Whether to include statistics in boxes
+            show_removed_data: Show boxes for data removed by filter/drop operations
+            show_merge_inputs: Show both input DataFrames for merge operations
             
         Returns:
             Mermaid flowchart code string
@@ -100,24 +139,41 @@ class MermaidRenderer:
             "",
         ]
         
+        # Build a map of DataFrame sources for merge visualization
+        df_source_map = self._build_df_source_map(events)
+        
         # Generate node definitions
         lines.append("    %% Node definitions")
+        removed_nodes = []  # Track removed data nodes
+        
         for event in events:
             node_def = self._render_node(event, include_stats)
             lines.append(node_def)
+            
+            # Generate removed data node for filter/drop operations
+            if show_removed_data and self._is_data_removal_operation(event):
+                removed_node = self._render_removed_data_node(event)
+                if removed_node:
+                    lines.append(removed_node)
+                    removed_nodes.append(event.event_id)
         
         lines.append("")
         
         # Generate connections
         lines.append("    %% Connections")
-        connections = self._generate_connections(events)
+        connections = self._generate_connections(
+            events, 
+            df_source_map, 
+            show_merge_inputs,
+            removed_nodes,
+        )
         lines.extend(connections)
         
         lines.append("")
         
         # Generate styles
         lines.append("    %% Styles")
-        styles = self._generate_styles(events)
+        styles = self._generate_styles(events, removed_nodes)
         lines.extend(styles)
         
         # Add legend subgraph
@@ -134,6 +190,62 @@ class MermaidRenderer:
     empty["No operations recorded"]
     style empty fill:#f9f9f9,stroke:#ccc,stroke-dasharray: 5 5
 """
+    
+    def _build_df_source_map(self, events: list[FlowEvent]) -> dict[str, str]:
+        """
+        Build a map from DataFrame names/sources to event IDs.
+        
+        This helps identify which events produced which DataFrames
+        for proper merge visualization.
+        """
+        df_map = {}
+        
+        for event in events:
+            # Register output DataFrame by various identifiers
+            if event.output_df:
+                if event.output_df.name:
+                    df_map[event.output_df.name] = event.event_id
+                if event.output_df.source_file:
+                    df_map[event.output_df.source_file] = event.event_id
+            
+            # Also register input DataFrames
+            for df_info in event.input_dfs:
+                if df_info.name and df_info.name not in df_map:
+                    df_map[df_info.name] = event.event_id
+                if df_info.source_file and df_info.source_file not in df_map:
+                    df_map[df_info.source_file] = event.event_id
+        
+        return df_map
+    
+    def _is_data_removal_operation(self, event: FlowEvent) -> bool:
+        """Check if this operation removes data."""
+        if event.operation_type in [
+            OperationType.FILTER, OperationType.LOC, OperationType.ILOC,
+            OperationType.QUERY, OperationType.DROP_DUPLICATES, OperationType.DROPNA,
+        ]:
+            # Check if rows were actually removed
+            if event.input_dfs and event.output_df:
+                return event.input_dfs[0].n_rows > event.output_df.n_rows
+        return False
+    
+    def _render_removed_data_node(self, event: FlowEvent) -> str | None:
+        """Render a node showing removed data for filter/drop operations."""
+        if not event.input_dfs or not event.output_df:
+            return None
+        
+        input_rows = event.input_dfs[0].n_rows
+        output_rows = event.output_df.n_rows
+        removed_rows = input_rows - output_rows
+        
+        if removed_rows <= 0:
+            return None
+        
+        pct = (removed_rows / input_rows * 100) if input_rows > 0 else 0
+        
+        content = f"🗑️ Removed<br/>{removed_rows:,} rows<br/>({pct:.1f}%)"
+        node_id = f"{event.event_id}_removed"
+        
+        return f'    {node_id}[/"{content}"/]'
     
     def _render_node(self, event: FlowEvent, include_stats: bool = True) -> str:
         """
@@ -275,10 +387,22 @@ class MermaidRenderer:
         # Default - rectangle
         return "[", "]"
     
-    def _generate_connections(self, events: list[FlowEvent]) -> list[str]:
+    def _generate_connections(
+        self, 
+        events: list[FlowEvent],
+        df_source_map: dict[str, str],
+        show_merge_inputs: bool,
+        removed_nodes: list[str],
+    ) -> list[str]:
         """
         Generate connection arrows between nodes.
         
+        Args:
+            events: List of FlowEvents
+            df_source_map: Map from DataFrame names to event IDs
+            show_merge_inputs: Whether to show both inputs for merge
+            removed_nodes: List of event IDs that have removed data nodes
+            
         Returns:
             List of Mermaid connection strings
         """
@@ -293,16 +417,72 @@ class MermaidRenderer:
             # Determine arrow style based on operation
             arrow = self._get_arrow_style(event.operation_type)
             
-            # For merge operations, we might have multiple inputs
-            if event.operation_type in [OperationType.MERGE, OperationType.JOIN]:
-                if len(event.input_dfs) > 1 and i >= 2:
-                    # Connect previous two events if available
-                    connections.append(f"    {prev_event.event_id} {arrow} {event.event_id}")
-                    # Add a note about the merge
+            # For merge operations, try to connect both source DataFrames
+            if show_merge_inputs and event.operation_type in [OperationType.MERGE, OperationType.JOIN]:
+                merge_connections = self._get_merge_connections(event, events, i, df_source_map)
+                if merge_connections:
+                    connections.extend(merge_connections)
                 else:
                     connections.append(f"    {prev_event.event_id} {arrow} {event.event_id}")
             else:
                 connections.append(f"    {prev_event.event_id} {arrow} {event.event_id}")
+            
+            # Add connection to removed data node
+            if event.event_id in removed_nodes:
+                removed_node_id = f"{event.event_id}_removed"
+                connections.append(f"    {event.event_id} -.-> {removed_node_id}")
+        
+        return connections
+    
+    def _get_merge_connections(
+        self,
+        event: FlowEvent,
+        events: list[FlowEvent],
+        current_index: int,
+        df_source_map: dict[str, str],
+    ) -> list[str]:
+        """
+        Get connections for merge operations from both input DataFrames.
+        
+        Returns list of connection strings, or empty list if can't determine sources.
+        """
+        connections = []
+        arrow = self._get_arrow_style(event.operation_type)
+        
+        if len(event.input_dfs) >= 2:
+            source_events = []
+            
+            for df_info in event.input_dfs:
+                source_event_id = None
+                
+                # Try to find the source event by DataFrame name
+                if df_info.name and df_info.name in df_source_map:
+                    source_event_id = df_source_map[df_info.name]
+                elif df_info.source_file and df_info.source_file in df_source_map:
+                    source_event_id = df_source_map[df_info.source_file]
+                
+                if source_event_id:
+                    source_events.append(source_event_id)
+            
+            # If we found at least 2 sources, connect them both
+            if len(source_events) >= 2:
+                # Remove duplicates while preserving order
+                seen = set()
+                unique_sources = []
+                for s in source_events:
+                    if s not in seen:
+                        seen.add(s)
+                        unique_sources.append(s)
+                
+                for source_id in unique_sources[:2]:  # Max 2 sources
+                    connections.append(f"    {source_id} {arrow} {event.event_id}")
+            elif len(source_events) == 1:
+                # Found one source, also connect previous event
+                connections.append(f"    {source_events[0]} {arrow} {event.event_id}")
+                if current_index > 0:
+                    prev_event = events[current_index - 1]
+                    if prev_event.event_id != source_events[0]:
+                        connections.append(f"    {prev_event.event_id} {arrow} {event.event_id}")
         
         return connections
     
@@ -314,31 +494,54 @@ class MermaidRenderer:
         
         # Dotted arrow for filter (some data may be lost)
         if op_type in [OperationType.FILTER, OperationType.LOC, 
-                       OperationType.DROPNA, OperationType.DROP_DUPLICATES]:
+                       OperationType.DROPNA, OperationType.DROP_DUPLICATES,
+                       OperationType.QUERY]:
             return "-.->"
         
         # Default arrow
         return "-->"
     
-    def _generate_styles(self, events: list[FlowEvent]) -> list[str]:
+    def _generate_styles(
+        self, 
+        events: list[FlowEvent], 
+        removed_nodes: list[str],
+    ) -> list[str]:
         """
         Generate Mermaid style definitions for nodes.
         
+        Args:
+            events: List of FlowEvents
+            removed_nodes: List of event IDs that have removed data nodes
+            
         Returns:
             List of style definition strings
         """
         styles = []
+        use_colors = self.theme.get("use_colors", True)
         
         for event in events:
-            color = event.get_color()
-            # Calculate contrasting text color
-            text_color = self._get_contrasting_color(color)
+            if use_colors:
+                color = event.get_color()
+                text_color = self._get_contrasting_color(color)
+                stroke_color = self._darken_color(color)
+            else:
+                color = self.theme.get("node_fill", "#f5f5f5")
+                text_color = self.theme.get("text", "#333333")
+                stroke_color = self.theme.get("node_stroke", "#666666")
             
             style = (
                 f"    style {event.event_id} "
-                f"fill:{color},stroke:{self._darken_color(color)},color:{text_color}"
+                f"fill:{color},stroke:{stroke_color},color:{text_color}"
             )
             styles.append(style)
+            
+            # Style for removed data nodes
+            if event.event_id in removed_nodes:
+                removed_node_id = f"{event.event_id}_removed"
+                styles.append(
+                    f"    style {removed_node_id} "
+                    f"fill:#ffcccc,stroke:#cc0000,color:#660000,stroke-dasharray: 5 5"
+                )
         
         return styles
     
@@ -351,6 +554,7 @@ class MermaidRenderer:
         """
         # Get unique operation types used
         used_types = set(event.operation_type for event in events)
+        use_colors = self.theme.get("use_colors", True)
         
         # Group by category
         legend_items = []
@@ -358,7 +562,7 @@ class MermaidRenderer:
             category_ops = [op for op in op_types if op in used_types]
             if category_ops:
                 for op in category_ops:
-                    color = OPERATION_COLORS.get(op, "#495057")
+                    color = OPERATION_COLORS.get(op, "#495057") if use_colors else self.theme.get("node_fill", "#f5f5f5")
                     legend_items.append((category, op.value, color))
         
         if not legend_items:
@@ -372,8 +576,11 @@ class MermaidRenderer:
         for i, (category, op_name, color) in enumerate(legend_items[:6]):  # Limit to 6
             node_id = f"legend_{i}"
             lines.append(f'        {node_id}["{op_name}"]')
-            text_color = self._get_contrasting_color(color)
-            lines.append(f"        style {node_id} fill:{color},stroke:#333,color:{text_color}")
+            if use_colors:
+                text_color = self._get_contrasting_color(color)
+                lines.append(f"        style {node_id} fill:{color},stroke:#333,color:{text_color}")
+            else:
+                lines.append(f"        style {node_id} fill:{color},stroke:#666,color:#333")
         
         lines.append("    end")
         
@@ -551,4 +758,3 @@ def render_events_to_mermaid(
     """
     renderer = MermaidRenderer()
     return renderer.render(events, **kwargs)
-

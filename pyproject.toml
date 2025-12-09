@@ -23,6 +23,8 @@ classifiers = [
 dependencies = [
     "pandas>=2.0.0",
     "numpy>=1.24.0",
+    "seaborn>=0.13.2",
+    "matplotlib>=3.10.7",
 ]
 
 [project.optional-dependencies]

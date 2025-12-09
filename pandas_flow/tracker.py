@@ -343,6 +343,8 @@ class FlowTracker:
         direction: str = "TB",
         include_legend: bool = True,
         include_stats: bool = True,
+        show_removed_data: bool = True,
+        show_merge_inputs: bool = True,
     ) -> str:
         """
         Render the flow diagram to a file.
@@ -353,6 +355,8 @@ class FlowTracker:
             direction: Flow direction ("TB", "LR", "BT", "RL")
             include_legend: Whether to include a color legend
             include_stats: Whether to include statistics in boxes
+            show_removed_data: Show boxes for data removed by filter/drop operations
+            show_merge_inputs: Show both input DataFrames for merge operations
             
         Returns:
             Generated Mermaid code
@@ -363,6 +367,8 @@ class FlowTracker:
             direction=direction,
             include_legend=include_legend,
             include_stats=include_stats,
+            show_removed_data=show_removed_data,
+            show_merge_inputs=show_merge_inputs,
         )
         
         # Determine output format
@@ -384,6 +390,8 @@ class FlowTracker:
         direction: str = "TB",
         include_legend: bool = True,
         include_stats: bool = True,
+        show_removed_data: bool = True,
+        show_merge_inputs: bool = True,
     ) -> str:
         """
         Get the Mermaid diagram code without saving.
@@ -393,6 +401,8 @@ class FlowTracker:
             direction: Flow direction
             include_legend: Whether to include legend
             include_stats: Whether to include stats
+            show_removed_data: Show boxes for data removed by filter/drop operations
+            show_merge_inputs: Show both input DataFrames for merge operations
             
         Returns:
             Mermaid code string
@@ -403,6 +413,8 @@ class FlowTracker:
             direction=direction,
             include_legend=include_legend,
             include_stats=include_stats,
+            show_removed_data=show_removed_data,
+            show_merge_inputs=show_merge_inputs,
         )
     
     def summary(self) -> str:

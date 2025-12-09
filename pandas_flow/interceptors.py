@@ -625,6 +625,253 @@ def _intercept_dataframe_methods() -> None:
         return result
     
     pd.DataFrame.astype = tracked_astype
+    
+    # reset_index
+    _original_methods["DataFrame.reset_index"] = pd.DataFrame.reset_index
+    
+    @functools.wraps(pd.DataFrame.reset_index)
+    def tracked_reset_index(self, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.reset_index"](self, *args, **kwargs)
+        
+        inplace = kwargs.get("inplace", False)
+        if _tracker and result is not None and not inplace:
+            drop = kwargs.get("drop", False)
+            desc = "Reset index" + (" (drop)" if drop else " (keep as column)")
+            
+            _tracker.record_operation(
+                operation_type=OperationType.CUSTOM,
+                operation_name="Reset Index",
+                input_dfs=[self],
+                output_df=result,
+                description=desc,
+                arguments={"drop": drop},
+            )
+        
+        return result
+    
+    pd.DataFrame.reset_index = tracked_reset_index
+    
+    # set_index
+    _original_methods["DataFrame.set_index"] = pd.DataFrame.set_index
+    
+    @functools.wraps(pd.DataFrame.set_index)
+    def tracked_set_index(self, keys, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.set_index"](self, keys, *args, **kwargs)
+        
+        inplace = kwargs.get("inplace", False)
+        if _tracker and result is not None and not inplace:
+            key_names = keys if isinstance(keys, list) else [keys]
+            desc = f"Set index: {', '.join(str(k) for k in key_names)}"
+            
+            _tracker.record_operation(
+                operation_type=OperationType.CUSTOM,
+                operation_name="Set Index",
+                input_dfs=[self],
+                output_df=result,
+                description=desc,
+                arguments={"keys": key_names},
+            )
+        
+        return result
+    
+    pd.DataFrame.set_index = tracked_set_index
+    
+    # sample
+    _original_methods["DataFrame.sample"] = pd.DataFrame.sample
+    
+    @functools.wraps(pd.DataFrame.sample)
+    def tracked_sample(self, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.sample"](self, *args, **kwargs)
+        
+        if _tracker:
+            n = kwargs.get("n") or (args[0] if args else None)
+            frac = kwargs.get("frac")
+            
+            if frac:
+                desc = f"Sample {frac*100:.0f}% of rows"
+            elif n:
+                desc = f"Sample {n} rows"
+            else:
+                desc = "Sample rows"
+            
+            _tracker.record_operation(
+                operation_type=OperationType.FILTER,
+                operation_name="Sample",
+                input_dfs=[self],
+                output_df=result,
+                description=desc,
+                arguments={"n": n, "frac": frac},
+            )
+        
+        return result
+    
+    pd.DataFrame.sample = tracked_sample
+    
+    # replace
+    _original_methods["DataFrame.replace"] = pd.DataFrame.replace
+    
+    @functools.wraps(pd.DataFrame.replace)
+    def tracked_replace(self, to_replace=None, value=None, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.replace"](self, to_replace, value, *args, **kwargs)
+        
+        inplace = kwargs.get("inplace", False)
+        if _tracker and result is not None and not inplace:
+            if isinstance(to_replace, dict):
+                desc = f"Replace values in {len(to_replace)} mappings"
+            else:
+                desc = f"Replace {to_replace} with {value}"
+            
+            _tracker.record_operation(
+                operation_type=OperationType.CUSTOM,
+                operation_name="Replace",
+                input_dfs=[self],
+                output_df=result,
+                description=desc,
+                arguments={"to_replace": str(to_replace)[:30], "value": str(value)[:30]},
+            )
+        
+        return result
+    
+    pd.DataFrame.replace = tracked_replace
+    
+    # stack
+    _original_methods["DataFrame.stack"] = pd.DataFrame.stack
+    
+    @functools.wraps(pd.DataFrame.stack)
+    def tracked_stack(self, *args, **kwargs):
+        result = _original_methods["DataFrame.stack"](self, *args, **kwargs)
+        
+        if _tracker and isinstance(result, pd.DataFrame):
+            _tracker.record_operation(
+                operation_type=OperationType.STACK,
+                operation_name="Stack",
+                input_dfs=[self],
+                output_df=result,
+                description="Stack columns to rows",
+                arguments={},
+            )
+        
+        return result
+    
+    pd.DataFrame.stack = tracked_stack
+    
+    # unstack
+    _original_methods["DataFrame.unstack"] = pd.DataFrame.unstack
+    
+    @functools.wraps(pd.DataFrame.unstack)
+    def tracked_unstack(self, *args, **kwargs):
+        result = _original_methods["DataFrame.unstack"](self, *args, **kwargs)
+        
+        if _tracker and isinstance(result, pd.DataFrame):
+            _tracker.record_operation(
+                operation_type=OperationType.UNSTACK,
+                operation_name="Unstack",
+                input_dfs=[self],
+                output_df=result,
+                description="Unstack rows to columns",
+                arguments={},
+            )
+        
+        return result
+    
+    pd.DataFrame.unstack = tracked_unstack
+    
+    # explode
+    _original_methods["DataFrame.explode"] = pd.DataFrame.explode
+    
+    @functools.wraps(pd.DataFrame.explode)
+    def tracked_explode(self, column, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.explode"](self, column, *args, **kwargs)
+        
+        if _tracker:
+            cols = column if isinstance(column, list) else [column]
+            
+            _tracker.record_operation(
+                operation_type=OperationType.CUSTOM,
+                operation_name="Explode",
+                input_dfs=[self],
+                output_df=result,
+                description=f"Explode list column(s): {', '.join(str(c) for c in cols)}",
+                arguments={"column": cols},
+            )
+        
+        return result
+    
+    pd.DataFrame.explode = tracked_explode
+    
+    # clip
+    _original_methods["DataFrame.clip"] = pd.DataFrame.clip
+    
+    @functools.wraps(pd.DataFrame.clip)
+    def tracked_clip(self, lower=None, upper=None, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.clip"](self, lower, upper, *args, **kwargs)
+        
+        if _tracker:
+            bounds = []
+            if lower is not None:
+                bounds.append(f"min={lower}")
+            if upper is not None:
+                bounds.append(f"max={upper}")
+            desc = f"Clip values: {', '.join(bounds)}" if bounds else "Clip values"
+            
+            _tracker.record_operation(
+                operation_type=OperationType.CUSTOM,
+                operation_name="Clip",
+                input_dfs=[self],
+                output_df=result,
+                description=desc,
+                arguments={"lower": lower, "upper": upper},
+            )
+        
+        return result
+    
+    pd.DataFrame.clip = tracked_clip
+    
+    # nlargest
+    _original_methods["DataFrame.nlargest"] = pd.DataFrame.nlargest
+    
+    @functools.wraps(pd.DataFrame.nlargest)
+    def tracked_nlargest(self, n, columns, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.nlargest"](self, n, columns, *args, **kwargs)
+        
+        if _tracker:
+            cols = columns if isinstance(columns, list) else [columns]
+            
+            _tracker.record_operation(
+                operation_type=OperationType.FILTER,
+                operation_name="N Largest",
+                input_dfs=[self],
+                output_df=result,
+                description=f"Top {n} by {', '.join(cols)}",
+                arguments={"n": n, "columns": cols},
+            )
+        
+        return result
+    
+    pd.DataFrame.nlargest = tracked_nlargest
+    
+    # nsmallest
+    _original_methods["DataFrame.nsmallest"] = pd.DataFrame.nsmallest
+    
+    @functools.wraps(pd.DataFrame.nsmallest)
+    def tracked_nsmallest(self, n, columns, *args, **kwargs) -> pd.DataFrame:
+        result = _original_methods["DataFrame.nsmallest"](self, n, columns, *args, **kwargs)
+        
+        if _tracker:
+            cols = columns if isinstance(columns, list) else [columns]
+            
+            _tracker.record_operation(
+                operation_type=OperationType.FILTER,
+                operation_name="N Smallest",
+                input_dfs=[self],
+                output_df=result,
+                description=f"Bottom {n} by {', '.join(cols)}",
+                arguments={"n": n, "columns": cols},
+            )
+        
+        return result
+    
+    pd.DataFrame.nsmallest = tracked_nsmallest
 
 
 def _extract_filename(filepath: Any) -> str:

@@ -8,7 +8,7 @@ and generates visual flowcharts using Mermaid syntax.
 from .tracker import FlowTracker, setup
 from .events import OperationType, FlowEvent
 from .stats import StatsCalculator
-from .mermaid_renderer import MermaidRenderer
+from .mermaid_renderer import MermaidRenderer, THEMES
 
 __version__ = "0.1.0"
 __all__ = [
@@ -18,5 +18,6 @@ __all__ = [
     "FlowEvent",
     "StatsCalculator",
     "MermaidRenderer",
+    "THEMES",
 ]
 

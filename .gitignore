@@ -19,5 +19,5 @@ __pycache__/
 *.cpython-311.pyzwz
 *.cpython-311.pyzwzw
 *.cpython-311.pyzwzwz
-
+pandas_flow/__pycache__/
 .codacy/
