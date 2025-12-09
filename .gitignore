@@ -3,3 +3,21 @@
 #Ignore cursor AI rules
 .cursor/rules/codacy.mdc
 output/
+
+# pycache
+__pycache__/
+.pytest_cache/
+*.pyc
+/pandas_flow/__pycache__/interceptors.cpython-311.pyc
+*.cpython-311.pyc
+*.cpython-311.pyo
+*.cpython-311.pyd
+*.cpython-311.pyw
+*.cpython-311.pyz
+*.cpython-311.pywz
+*.cpython-311.pyzw
+*.cpython-311.pyzwz
+*.cpython-311.pyzwzw
+*.cpython-311.pyzwzwz
+
+.codacy/
