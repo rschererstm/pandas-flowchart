@@ -5,10 +5,10 @@ This library intercepts pandas operations, records metadata about each transform
 and generates visual flowcharts using Mermaid syntax.
 """
 
-from .tracker import FlowTracker, setup
-from .events import OperationType, FlowEvent
+from .events import FlowEvent, OperationType
+from .mermaid_renderer import THEMES, MermaidRenderer
 from .stats import StatsCalculator
-from .mermaid_renderer import MermaidRenderer, THEMES
+from .tracker import FlowTracker, setup
 
 __version__ = "0.1.0"
 __all__ = [
@@ -20,4 +20,3 @@ __all__ = [
     "MermaidRenderer",
     "THEMES",
 ]
-
