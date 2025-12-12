@@ -13,7 +13,9 @@ A Python library that integrates with pandas to automatically track data transfo
 
 ## Example: Healthcare Data Pipeline
 
-This example tracks a realistic analytics workflow for a medical provider: loading patient/exam records, merging them on `patient_id`, filtering for active adults, deriving age groups, deduplicating visits, and then branching off into staged summaries before rendering the final Mermaid diagram shown below.
+This example tracks a realistic analytics workflow for a medical provider: loading patient/exam records, merging them on `patient_id`, filtering for active adults, deriving age groups, deduplicating visits, and 	then branching off into staged summaries before rendering the final Mermaid diagram shown below.
+
+[[image_link](https://raw.githubusercontent.com/rschererstm/pandas-flowchart/refs/heads/main/pandas_flow/imgs/healthcare_pipeline.png)]
 
 ![Healthcare Data Pipeline](pandas_flow/imgs/healthcare_pipeline.png)
 
@@ -26,7 +28,7 @@ pip install pandas-flowchart
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/pandas-flowchart.git
+git clone https://github.com/rschererstm/pandas-flowchart
 cd pandas-flowchart
 pip install -e .
 ```
