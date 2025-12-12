@@ -349,7 +349,7 @@ class FlowTracker:
         output_path: str,
         title: str = "Data Flow Pipeline",
         direction: str = "TB",
-        include_legend: bool = True,
+        include_legend: bool = False,
         include_stats: bool = True,
         show_removed_data: bool = True,
         show_merge_inputs: bool = True,

@@ -35,14 +35,14 @@ def check_visualization_support() -> dict[str, bool]:
 def generate_mini_histogram(
     data: pd.Series | np.ndarray | list,
     width: float = 1.2,
-    height: float = 0.4,
+    height: float = 0.5,
     color: str = "#3498db",
     bins: int = 15,
 ) -> str | None:
     """
     Generate a minimalist histogram as a base64-encoded PNG.
 
-    Style: Line plot with filled area below, no axes, very compact.
+    Style: Line plot with filled area below, minimal x-axis, very compact.
     Designed to fit inside Mermaid node labels.
 
     Args:
@@ -84,11 +84,22 @@ def generate_mini_histogram(
     ax.fill_between(bin_centers, counts, alpha=0.3, color=color)
     ax.plot(bin_centers, counts, color=color, linewidth=1.5)
 
-    # Remove all axes, spines, ticks - completely clean
-    ax.set_axis_off()
+    # Minimal styling - show only x-axis with min/max labels
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.yaxis.set_visible(False)
 
-    # Tight layout
-    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    # Format x-axis ticks to show only min and max values
+    x_min, x_max = clean_data.min(), clean_data.max()
+    ax.set_xticks([x_min, x_max])
+    ax.set_xticklabels([f"{x_min:.0f}", f"{x_max:.0f}"], fontsize=6, color="#666666")
+    ax.tick_params(axis="x", length=2, pad=1, colors="#999999")
+    ax.spines["bottom"].set_color("#999999")
+    ax.spines["bottom"].set_linewidth(0.5)
+
+    # Tight layout with space for x-axis
+    plt.subplots_adjust(left=0.02, right=0.98, top=0.95, bottom=0.25)
 
     # Convert to base64
     buf = io.BytesIO()

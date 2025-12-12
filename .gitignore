@@ -21,3 +21,8 @@ __pycache__/
 *.cpython-311.pyzwzwz
 pandas_flow/__pycache__/
 .codacy/
+
+# Custom
+*.csv
+*.html
+*.mmd

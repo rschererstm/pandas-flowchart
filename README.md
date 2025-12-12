@@ -163,7 +163,7 @@ flow.render("pipeline.mmd")
 mermaid_code = flow.get_mermaid(
     title="My Data Pipeline",
     direction="TB",  # TB, LR, BT, RL
-    include_legend=True,
+    include_legend=False,
     include_stats=True,
 )
 ```
@@ -186,22 +186,22 @@ with pandas_flow.setup(track_variables={"id": "n_unique"}) as flow:
 
 ```mermaid
 flowchart TB
-    op_1[/"<b>Read CSV</b><br/><i>Load data from patients.csv</i><br/>📤 10,000 rows × 5 cols<br/>──────────────────────<br/>🔑 patient_id: 8,500 unique<br/>μ=45.30 [18.0–92.0]<br/>📊 ▁▂▄█▆▃▂▁"/]
+    op_1[/"<b>Read CSV</b><br/><i>Load data from patients.csv</i><br/>📤 10,000 rows × 5 cols<br/>──────────────────────<br/>🔑 patient_id: 8,500 unique<br/>mean=45.30 [18.0–92.0]<br/>📊 ▁▂▄█▆▃▂▁"/]
     
     op_2[/"<b>Read CSV</b><br/><i>Load data from exams.csv</i><br/>📤 25,000 rows × 8 cols"/]
     
     op_3[["<b>Merge (inner)</b><br/><i>INNER join on patient_id</i><br/>📥 patients.csv: 10,000×5<br/>📥 exams.csv: 25,000×8<br/>📤 23,500 rows × 12 cols"]]
     
-    op_4(["<b>Query</b><br/><i>Filter: age >= 18</i><br/>📤 22,100 rows × 12 cols<br/>↓ -1,400 (-6.0%)"])
+    op_4{"<b>Query</b><br/><i>Filter: age >= 18</i><br/>📤 22,100 rows × 12 cols<br/>↓ -1,400 (-6.0%)"}
     
     op_1 --> op_3
     op_2 --> op_3
     op_3 -.-> op_4
     
-    style op_1 fill:#6c757d,stroke:#4a5259,color:#ffffff
-    style op_2 fill:#6c757d,stroke:#4a5259,color:#ffffff
-    style op_3 fill:#27ae60,stroke:#1b7943,color:#ffffff
-    style op_4 fill:#3498db,stroke:#246a99,color:#ffffff
+    style op_1 fill:#9ca3af,stroke:#6b7280,color:#000000
+    style op_2 fill:#9ca3af,stroke:#6b7280,color:#000000
+    style op_3 fill:#6dc993,stroke:#4ca36d,color:#000000
+    style op_4 fill:#7cb3d9,stroke:#5691b7,color:#000000
 ```
 
 ### Box Contents
@@ -214,23 +214,23 @@ Each operation box includes:
 - **Output DataFrame** dimensions
 - **Row change indicator** (↑ increase / ↓ decrease with percentage)
 - **Tracked variable statistics**
-- **Distribution histogram** (ASCII sparkline)
+- **Distribution histogram** (ASCII sparkline or embedded image with x-axis)
 
 ## Color Scheme
 
-Operations are color-coded by type:
+Operations are color-coded by type (pastel/less saturated colors):
 
 | Operation Type | Color |
 |---------------|-------|
-| Data Loading | Gray (#6c757d) |
-| Filtering | Blue (#3498db) |
-| Joins | Green (#27ae60) |
-| Column Creation | Orange (#e67e22) |
-| Drop Operations | Red (#e74c3c) |
-| Groupby | Purple (#9b59b6) |
-| Concatenation | Teal (#17a2b8) |
-| Reshape | Pink (#fd79a8) |
-| Sorting | Yellow (#f1c40f) |
+| Data Loading | Soft Gray (#9ca3af) |
+| Filtering | Soft Blue (#7cb3d9) |
+| Joins | Soft Green (#6dc993) |
+| Column Creation | Soft Orange (#f0a86e) |
+| Drop Operations | Soft Red (#e8918a) |
+| Groupby | Soft Purple (#b99ad1) |
+| Concatenation | Soft Teal (#6bc4ce) |
+| Reshape | Soft Pink (#f5a3c7) |
+| Sorting | Soft Yellow (#f5d76e) |
 
 ## API Reference
 
@@ -256,7 +256,7 @@ Render the flowchart to a file.
 - `output_path` (str): Output file path (.md, .html, or .mmd)
 - `title` (str): Diagram title. Default: `"Data Flow Pipeline"`
 - `direction` (str): Flow direction. Options: `"TB"`, `"LR"`, `"BT"`, `"RL"`
-- `include_legend` (bool): Include color legend. Default: `True`
+- `include_legend` (bool): Include color legend. Default: `False`
 - `include_stats` (bool): Include statistics in boxes. Default: `True`
 
 ### `FlowTracker.get_mermaid()`

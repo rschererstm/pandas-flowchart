@@ -115,7 +115,7 @@ class MermaidRenderer:
         events: list[FlowEvent],
         title: str = "Data Flow Pipeline",
         direction: str = "TB",
-        include_legend: bool = True,
+        include_legend: bool = False,
         include_stats: bool = True,
         show_removed_data: bool = True,
         show_merge_inputs: bool = True,
@@ -336,11 +336,16 @@ class MermaidRenderer:
 
         # Variable name with unique count
         if stat.n_unique > 0:
-            lines.append(f"🔑 {self._escape(stat.name)}: {stat.n_unique:,} unique")
+            if stat.mean_value is None:
+                symbol = "🔑"
+            else:
+                symbol = "⭐"
+                
+            lines.append(f"{symbol} {self._escape(stat.name)}: {stat.n_unique:,} unique")
 
         # Numeric statistics
         if stat.mean_value is not None:
-            mean_str = f"μ={stat.mean_value:.2f}"
+            mean_str = f"mean={stat.mean_value:.2f}"
             if stat.min_value is not None and stat.max_value is not None:
                 mean_str += f" [{stat.min_value:.1f}–{stat.max_value:.1f}]"
             lines.append(mean_str)
@@ -409,14 +414,17 @@ class MermaidRenderer:
         ]:
             return "[/", "/]"
 
-        # Filter operations - stadium shape
+        # Filter operations - stadium shape (except query which is diamond)
         if op_type in [
             OperationType.FILTER,
             OperationType.LOC,
             OperationType.ILOC,
-            OperationType.QUERY,
         ]:
             return "([", "])"
+
+        # Query operation - diamond shape
+        if op_type == OperationType.QUERY:
+            return "{", "}"
 
         # Join operations - subroutine (double border)
         if op_type in [OperationType.MERGE, OperationType.JOIN]:

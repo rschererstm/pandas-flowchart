@@ -69,51 +69,51 @@ class OperationType(Enum):
     CUSTOM = "custom"
 
 
-# Color scheme for operation types (Mermaid compatible)
+# Color scheme for operation types (Mermaid compatible) - pastel/less saturated colors
 OPERATION_COLORS = {
-    # Loading - gray
-    OperationType.READ_CSV: "#6c757d",
-    OperationType.READ_EXCEL: "#6c757d",
-    OperationType.READ_PARQUET: "#6c757d",
-    OperationType.READ_JSON: "#6c757d",
-    OperationType.READ_SQL: "#6c757d",
-    # Filtering - blue
-    OperationType.FILTER: "#3498db",
-    OperationType.LOC: "#3498db",
-    OperationType.ILOC: "#3498db",
-    OperationType.QUERY: "#3498db",
-    # Joins - green
-    OperationType.MERGE: "#27ae60",
-    OperationType.JOIN: "#27ae60",
-    # Column operations - orange
-    OperationType.ASSIGN: "#e67e22",
-    OperationType.RENAME: "#e67e22",
-    # Drop - red
-    OperationType.DROP: "#e74c3c",
-    OperationType.DROP_DUPLICATES: "#e74c3c",
-    OperationType.DROPNA: "#e74c3c",
-    # Groupby - purple
-    OperationType.GROUPBY: "#9b59b6",
-    OperationType.AGGREGATE: "#9b59b6",
-    OperationType.TRANSFORM: "#9b59b6",
-    # Concat - teal
-    OperationType.CONCAT: "#17a2b8",
-    OperationType.APPEND: "#17a2b8",
-    # Reshape - pink
-    OperationType.PIVOT: "#fd79a8",
-    OperationType.PIVOT_TABLE: "#fd79a8",
-    OperationType.MELT: "#fd79a8",
-    OperationType.STACK: "#fd79a8",
-    OperationType.UNSTACK: "#fd79a8",
-    # Sorting - yellow
-    OperationType.SORT_VALUES: "#f1c40f",
-    OperationType.SORT_INDEX: "#f1c40f",
-    # Fill - cyan
-    OperationType.FILLNA: "#00cec9",
-    # Type conversion - brown
-    OperationType.ASTYPE: "#a0522d",
-    # Custom - dark gray
-    OperationType.CUSTOM: "#495057",
+    # Loading - soft gray
+    OperationType.READ_CSV: "#9ca3af",
+    OperationType.READ_EXCEL: "#9ca3af",
+    OperationType.READ_PARQUET: "#9ca3af",
+    OperationType.READ_JSON: "#9ca3af",
+    OperationType.READ_SQL: "#9ca3af",
+    # Filtering - soft blue
+    OperationType.FILTER: "#7cb3d9",
+    OperationType.LOC: "#7cb3d9",
+    OperationType.ILOC: "#7cb3d9",
+    OperationType.QUERY: "#7cb3d9",
+    # Joins - soft green
+    OperationType.MERGE: "#6dc993",
+    OperationType.JOIN: "#6dc993",
+    # Column operations - soft orange
+    OperationType.ASSIGN: "#f0a86e",
+    OperationType.RENAME: "#f0a86e",
+    # Drop - soft red
+    OperationType.DROP: "#e8918a",
+    OperationType.DROP_DUPLICATES: "#e8918a",
+    OperationType.DROPNA: "#e8918a",
+    # Groupby - soft purple
+    OperationType.GROUPBY: "#b99ad1",
+    OperationType.AGGREGATE: "#b99ad1",
+    OperationType.TRANSFORM: "#b99ad1",
+    # Concat - soft teal
+    OperationType.CONCAT: "#6bc4ce",
+    OperationType.APPEND: "#6bc4ce",
+    # Reshape - soft pink
+    OperationType.PIVOT: "#f5a3c7",
+    OperationType.PIVOT_TABLE: "#f5a3c7",
+    OperationType.MELT: "#f5a3c7",
+    OperationType.STACK: "#f5a3c7",
+    OperationType.UNSTACK: "#f5a3c7",
+    # Sorting - soft yellow
+    OperationType.SORT_VALUES: "#f5d76e",
+    OperationType.SORT_INDEX: "#f5d76e",
+    # Fill - soft cyan
+    OperationType.FILLNA: "#72d5d0",
+    # Type conversion - soft brown
+    OperationType.ASTYPE: "#c49a72",
+    # Custom - medium gray
+    OperationType.CUSTOM: "#7b8794",
 }
 
 # Category names for legend
