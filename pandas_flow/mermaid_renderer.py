@@ -109,7 +109,7 @@ class MermaidRenderer:
         self.theme_name = theme
         self._html_mode = False
         self._histogram_data: dict[str, Any] = {}  # Store data for histogram generation
-        self._hexbin_data: dict[str, tuple[list, list]] = {}  # Store data for hexbin generation
+        self._hexbin_data: dict[str, tuple[list, list]] = {}  # Store data for scatter generation
 
     def render(
         self,
@@ -137,7 +137,7 @@ class MermaidRenderer:
             show_merge_inputs: Show both input DataFrames for merge operations
             html_mode: If True, embed mini histogram/hexbin images in node labels
             histogram_data: Dict of {variable_name: data_series} for histogram generation
-            hexbin_data: Dict of {name: (x_data, y_data)} for hexbin scatter generation
+            hexbin_data: Dict of {name: (x_data, y_data)} for scatter plot generation
 
         Returns:
             Mermaid flowchart code string
@@ -326,6 +326,12 @@ class MermaidRenderer:
                 stat_lines = self._format_stats(stat)
                 content_lines.extend(stat_lines)
 
+        # Scatter plot - only in HTML mode (once per node, not per stat)
+        if self._html_mode and self._hexbin_data:
+            scatter_img = self._generate_inline_scatter()
+            if scatter_img:
+                content_lines.append(scatter_img)
+
         # Join content with line breaks
         content = "<br/>".join(content_lines)
 
@@ -364,12 +370,6 @@ class MermaidRenderer:
         elif stat.histogram:
             lines.append(f"📊 {stat.histogram}")
 
-        # Hexbin scatter - only in HTML mode
-        if self._html_mode and self._hexbin_data:
-            hexbin_img = self._generate_inline_hexbin()
-            if hexbin_img:
-                lines.append(hexbin_img)
-
         # Top values (truncated)
         if stat.top_values:
             top_items = []
@@ -402,8 +402,8 @@ class MermaidRenderer:
         except ImportError:
             return None
 
-    def _generate_inline_hexbin(self) -> str | None:
-        """Generate an inline hexbin scatter image tag for HTML mode."""
+    def _generate_inline_scatter(self) -> str | None:
+        """Generate an inline scatter plot image tag for HTML mode."""
         if not self._hexbin_data:
             return None
 
