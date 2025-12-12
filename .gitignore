@@ -26,3 +26,4 @@ pandas_flow/__pycache__/
 *.csv
 *.html
 *.mmd
+dist/
