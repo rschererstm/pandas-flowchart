@@ -15,9 +15,9 @@ from typing import Any
 
 import pandas as pd
 
+from .cytoscape_renderer import CytoscapeRenderer
 from .events import DataFrameInfo, FlowEvent, OperationType
 from .mermaid_renderer import MermaidRenderer
-from .cytoscape_renderer import CytoscapeRenderer
 from .stats import StatsCalculator
 
 # Global tracker instance

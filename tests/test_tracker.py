@@ -314,8 +314,9 @@ class TestOutputFormats:
         self.flow.render(str(output_file), title="Test")
 
         content = output_file.read_text()
+        content_lower = content.lower()
         assert "<!DOCTYPE html>" in content
-        assert "mermaid" in content.lower()
+        assert "mermaid" in content_lower or "cytoscape" in content_lower
 
     def test_mermaid_output(self, tmp_path):
         """Test raw Mermaid output."""

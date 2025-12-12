@@ -5,9 +5,9 @@ This library intercepts pandas operations, records metadata about each transform
 and generates visual flowcharts using Cytoscape.js (interactive) or Mermaid syntax (static).
 """
 
+from .cytoscape_renderer import CytoscapeRenderer
 from .events import FlowEvent, OperationType
 from .mermaid_renderer import THEMES, MermaidRenderer
-from .cytoscape_renderer import CytoscapeRenderer
 from .stats import StatsCalculator
 from .tracker import FlowTracker, setup
 

@@ -19,7 +19,7 @@ from .events import (
 )
 
 if TYPE_CHECKING:
-    import pandas as pd
+    pass
 
 
 # Shape mapping for Cytoscape.js
@@ -524,20 +524,20 @@ class CytoscapeRenderer:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{escaped_title}</title>
-    
+
     <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Cytoscape.js -->
     <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
-    
+
     <!-- Dagre layout -->
     <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
     <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
-    
+
     <!-- Chart.js for histograms -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    
+
     <script>
         tailwind.config = {{
             darkMode: 'class',
@@ -560,68 +560,68 @@ class CytoscapeRenderer:
             }}
         }}
     </script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        
+
         * {{
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }}
-        
+
         body {{
             font-family: 'Inter', system-ui, sans-serif;
             overflow: hidden;
         }}
-        
+
         #cy {{
             width: 100%;
             height: 100vh;
         }}
-        
+
         .mono {{
             font-family: 'JetBrains Mono', monospace;
         }}
-        
+
         /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar {{
             width: 6px;
         }}
-        
+
         .custom-scrollbar::-webkit-scrollbar-track {{
             background: transparent;
         }}
-        
+
         .custom-scrollbar::-webkit-scrollbar-thumb {{
             background: #d1d5db;
             border-radius: 3px;
         }}
-        
+
         .dark .custom-scrollbar::-webkit-scrollbar-thumb {{
             background: #4b5563;
         }}
-        
+
         /* Slide panel animation */
         .slide-panel {{
             transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }}
-        
+
         .slide-panel.open {{
             transform: translateX(0);
         }}
-        
+
         /* Stat card hover effect */
         .stat-card {{
             transition: all 0.2s ease;
         }}
-        
+
         .stat-card:hover {{
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }}
-        
+
         .dark .stat-card:hover {{
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }}
@@ -651,10 +651,10 @@ class CytoscapeRenderer:
                     </div>
                 </div>
             </div>
-            
+
             <!-- Cytoscape Container -->
             <div id="cy" class="{"bg-surface-950" if is_dark else "bg-surface-50"}"></div>
-            
+
             <!-- Legend -->
             <div class="absolute bottom-4 left-4 {"bg-surface-900/90 border-surface-700" if is_dark else "bg-white/90 border-gray-200"} backdrop-blur-sm rounded-xl border p-4 shadow-lg">
                 <h3 class="text-xs font-semibold {"text-gray-400" if is_dark else "text-gray-500"} uppercase tracking-wider mb-3">Node Types</h3>
@@ -686,7 +686,7 @@ class CytoscapeRenderer:
                 </div>
             </div>
         </div>
-        
+
         <!-- Side Panel -->
         <div id="side-panel" class="slide-panel fixed right-0 top-0 bottom-0 w-96 {"bg-surface-900 border-surface-700" if is_dark else "bg-white border-gray-200"} border-l shadow-2xl z-20 flex flex-col">
             <!-- Panel Header -->
@@ -698,24 +698,24 @@ class CytoscapeRenderer:
                     </svg>
                 </button>
             </div>
-            
+
             <!-- Panel Content -->
             <div id="panel-content" class="flex-1 overflow-y-auto custom-scrollbar p-4">
                 <!-- Content injected by JavaScript -->
             </div>
         </div>
     </div>
-    
+
     <script>
         // Graph data
         const graphData = {graph_json};
-        
+
         // Theme state
         let isDark = {"true" if is_dark else "false"};
-        
+
         // Initialize Cytoscape
         cytoscape.use(cytoscapeDagre);
-        
+
         const cy = cytoscape({{
             container: document.getElementById('cy'),
             elements: graphData,
@@ -740,13 +740,13 @@ class CytoscapeRenderer:
             wheelSensitivity: 0.3,
             boxSelectionEnabled: false,
         }});
-        
+
         // Cytoscape styles function
         function getCytoscapeStyles(dark) {{
             const bgColor = dark ? '#09090b' : '#fafafa';
             const textColor = dark ? '#ffffff' : '#1f2937';
             const edgeColor = dark ? '#4b5563' : '#9ca3af';
-            
+
             return [
                 // Node base styles
                 {{
@@ -776,7 +776,7 @@ class CytoscapeRenderer:
                         'text-outline-color': 'data(color)',
                     }}
                 }},
-                
+
                 // Shape-specific styles
                 {{
                     selector: 'node[shape="barrel"]',
@@ -852,7 +852,7 @@ class CytoscapeRenderer:
                         'shape': 'ellipse',
                     }}
                 }},
-                
+
                 // Removed node style
                 {{
                     selector: 'node[type="removed"]',
@@ -870,7 +870,7 @@ class CytoscapeRenderer:
                         'height': '60px',
                     }}
                 }},
-                
+
                 // Hover state
                 {{
                     selector: 'node:active',
@@ -879,7 +879,7 @@ class CytoscapeRenderer:
                         'overlay-color': '#ffffff',
                     }}
                 }},
-                
+
                 // Selected state
                 {{
                     selector: 'node:selected',
@@ -891,7 +891,7 @@ class CytoscapeRenderer:
                         'shadow-blur': '20px',
                     }}
                 }},
-                
+
                 // Edge styles
                 {{
                     selector: 'edge',
@@ -908,7 +908,7 @@ class CytoscapeRenderer:
                         'target-endpoint': 'outside-to-node',
                     }}
                 }},
-                
+
                 // Merge edge style
                 {{
                     selector: 'edge[type="merge"]',
@@ -918,7 +918,7 @@ class CytoscapeRenderer:
                         'target-arrow-color': '#10b981',
                     }}
                 }},
-                
+
                 // Filter edge style
                 {{
                     selector: 'edge[type="filter"]',
@@ -929,7 +929,7 @@ class CytoscapeRenderer:
                         'target-arrow-color': '#60a5fa',
                     }}
                 }},
-                
+
                 // Removed data edge
                 {{
                     selector: 'edge[type="removed"]',
@@ -944,7 +944,7 @@ class CytoscapeRenderer:
                 }},
             ];
         }}
-        
+
         // Panel management
         const panel = document.getElementById('side-panel');
         const panelTitle = document.getElementById('panel-title');
@@ -952,41 +952,41 @@ class CytoscapeRenderer:
         const closeBtn = document.getElementById('close-panel');
         const fitBtn = document.getElementById('fit-btn');
         const themeToggle = document.getElementById('theme-toggle');
-        
+
         // Node click handler
         cy.on('tap', 'node', function(evt) {{
             const node = evt.target;
             const data = node.data();
-            
+
             if (data.type === 'removed') {{
                 showRemovedPanel(data);
             }} else {{
                 showNodePanel(data);
             }}
-            
+
             panel.classList.add('open');
             cy.nodes().unselect();
             node.select();
         }});
-        
+
         // Close panel handlers
         closeBtn.addEventListener('click', () => {{
             panel.classList.remove('open');
             cy.nodes().unselect();
         }});
-        
+
         cy.on('tap', function(evt) {{
             if (evt.target === cy) {{
                 panel.classList.remove('open');
                 cy.nodes().unselect();
             }}
         }});
-        
+
         // Fit button
         fitBtn.addEventListener('click', () => {{
             cy.fit(null, 60);
         }});
-        
+
         // Theme toggle
         themeToggle.addEventListener('click', () => {{
             isDark = !isDark;
@@ -994,28 +994,28 @@ class CytoscapeRenderer:
             document.body.classList.toggle('bg-surface-950');
             document.body.classList.toggle('bg-surface-50');
             cy.style(getCytoscapeStyles(isDark));
-            
+
             // Update UI elements would go here (simplified for this example)
             location.reload();
         }});
-        
+
         // Show node details panel
         function showNodePanel(data) {{
             const details = data.details || {{}};
             panelTitle.textContent = data.operationName || 'Node Details';
-            
+
             let html = '';
-            
+
             // Operation badge
             html += `
                 <div class="mb-6">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" 
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
                           style="background-color: ${{data.color}}20; color: ${{data.color}}; border: 1px solid ${{data.color}}40;">
                         ${{data.operationType || 'operation'}}
                     </span>
                 </div>
             `;
-            
+
             // Description
             if (details.description) {{
                 html += `
@@ -1025,7 +1025,7 @@ class CytoscapeRenderer:
                     </div>
                 `;
             }}
-            
+
             // Row change card
             if (details.rowChange) {{
                 const rc = details.rowChange;
@@ -1033,7 +1033,7 @@ class CytoscapeRenderer:
                 const isDecrease = rc.direction === 'decrease';
                 const color = isIncrease ? 'emerald' : isDecrease ? 'rose' : 'gray';
                 const icon = isIncrease ? '↑' : isDecrease ? '↓' : '→';
-                
+
                 html += `
                     <div class="stat-card mb-4 p-4 rounded-xl ${{isDark ? 'bg-surface-800' : 'bg-gray-50'}} border ${{isDark ? 'border-surface-700' : 'border-gray-200'}}">
                         <div class="flex items-center justify-between">
@@ -1045,7 +1045,7 @@ class CytoscapeRenderer:
                     </div>
                 `;
             }}
-            
+
             // Input/Output summary
             if (details.output) {{
                 html += `
@@ -1065,7 +1065,7 @@ class CytoscapeRenderer:
                     </div>
                 `;
             }}
-            
+
             // Statistics
             if (details.stats && details.stats.length > 0) {{
                 html += `
@@ -1073,7 +1073,7 @@ class CytoscapeRenderer:
                         <h3 class="${{isDark ? 'text-gray-400' : 'text-gray-500'}} text-xs font-semibold uppercase tracking-wider mb-3">Statistics</h3>
                         <div class="space-y-3">
                 `;
-                
+
                 for (const stat of details.stats) {{
                     html += `
                         <div class="stat-card p-4 rounded-xl ${{isDark ? 'bg-surface-800' : 'bg-gray-50'}} border ${{isDark ? 'border-surface-700' : 'border-gray-200'}}">
@@ -1082,7 +1082,7 @@ class CytoscapeRenderer:
                                 <span class="text-xs font-mono ${{isDark ? 'text-gray-400' : 'text-gray-500'}}">${{stat.unique?.toLocaleString() || 0}} unique</span>
                             </div>
                     `;
-                    
+
                     // Numeric stats
                     if (stat.mean !== undefined) {{
                         html += `
@@ -1106,7 +1106,7 @@ class CytoscapeRenderer:
                             </div>
                         `;
                     }}
-                    
+
                     // Top values
                     if (stat.topValues && stat.topValues.length > 0) {{
                         html += `
@@ -1128,13 +1128,13 @@ class CytoscapeRenderer:
                         }}
                         html += '</div></div>';
                     }}
-                    
+
                     html += '</div>';
                 }}
-                
+
                 html += '</div></div>';
             }}
-            
+
             // Histogram chart container
             if (details.histogramData && Object.keys(details.histogramData).length > 0) {{
                 html += `
@@ -1146,7 +1146,7 @@ class CytoscapeRenderer:
                     </div>
                 `;
             }}
-            
+
             // Scatter plot container
             if (details.scatterData && Object.keys(details.scatterData).length > 0) {{
                 html += `
@@ -1158,7 +1158,7 @@ class CytoscapeRenderer:
                     </div>
                 `;
             }}
-            
+
             // Columns list
             if (details.output && details.output.columns && details.output.columns.length > 0) {{
                 html += `
@@ -1171,7 +1171,7 @@ class CytoscapeRenderer:
                 }}
                 html += '</div></div>';
             }}
-            
+
             // Arguments
             if (details.arguments && Object.keys(details.arguments).length > 0) {{
                 html += `
@@ -1183,9 +1183,9 @@ class CytoscapeRenderer:
                     </div>
                 `;
             }}
-            
+
             panelContent.innerHTML = html;
-            
+
             // Render charts after DOM update
             setTimeout(() => {{
                 if (details.histogramData) {{
@@ -1196,12 +1196,12 @@ class CytoscapeRenderer:
                 }}
             }}, 100);
         }}
-        
+
         // Show removed data panel
         function showRemovedPanel(data) {{
             const details = data.details || {{}};
             panelTitle.textContent = 'Removed Data';
-            
+
             panelContent.innerHTML = `
                 <div class="text-center py-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 text-rose-500 mb-4">
@@ -1215,16 +1215,16 @@ class CytoscapeRenderer:
                 </div>
             `;
         }}
-        
+
         // Render histogram chart
         function renderHistogram(histogramData) {{
             const canvas = document.getElementById('histogram-chart');
             if (!canvas) return;
-            
+
             const firstKey = Object.keys(histogramData)[0];
             const data = histogramData[firstKey];
             if (!data || data.length === 0) return;
-            
+
             // Create histogram bins
             const numBins = 20;
             const min = Math.min(...data);
@@ -1232,17 +1232,17 @@ class CytoscapeRenderer:
             const binWidth = (max - min) / numBins;
             const bins = new Array(numBins).fill(0);
             const labels = [];
-            
+
             for (let i = 0; i < numBins; i++) {{
                 const binStart = min + i * binWidth;
                 labels.push(binStart.toFixed(1));
             }}
-            
+
             for (const value of data) {{
                 const binIndex = Math.min(numBins - 1, Math.floor((value - min) / binWidth));
                 bins[binIndex]++;
             }}
-            
+
             new Chart(canvas, {{
                 type: 'bar',
                 data: {{
@@ -1292,18 +1292,18 @@ class CytoscapeRenderer:
                 }}
             }});
         }}
-        
+
         // Render scatter chart
         function renderScatter(scatterData) {{
             const canvas = document.getElementById('scatter-chart');
             if (!canvas) return;
-            
+
             const firstKey = Object.keys(scatterData)[0];
             const data = scatterData[firstKey];
             if (!data || !data.x || !data.y) return;
-            
+
             const points = data.x.map((x, i) => ({{ x, y: data.y[i] }}));
-            
+
             new Chart(canvas, {{
                 type: 'scatter',
                 data: {{
@@ -1368,7 +1368,7 @@ class CytoscapeRenderer:
                 }}
             }});
         }}
-        
+
         // Utility function
         function escapeHtml(str) {{
             if (!str) return '';
@@ -1376,7 +1376,7 @@ class CytoscapeRenderer:
             div.textContent = str;
             return div.innerHTML;
         }}
-        
+
         // Initial fit
         cy.ready(() => {{
             setTimeout(() => cy.fit(null, 60), 100);
