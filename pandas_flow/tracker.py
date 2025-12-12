@@ -17,6 +17,7 @@ import pandas as pd
 
 from .events import DataFrameInfo, FlowEvent, OperationType
 from .mermaid_renderer import MermaidRenderer
+from .cytoscape_renderer import CytoscapeRenderer
 from .stats import StatsCalculator
 
 # Global tracker instance
@@ -36,6 +37,7 @@ def setup(
     scatter_variables: tuple[str, str] | None = None,
     auto_intercept: bool = True,
     theme: str = "default",
+    modern: bool = True,
 ) -> FlowTracker:
     """
     Set up a new FlowTracker and activate it.
@@ -51,6 +53,9 @@ def setup(
                          Only rendered in HTML mode
         auto_intercept: Whether to automatically intercept pandas operations
         theme: Color theme for the flowchart ("default", "dark", "light")
+        modern: Use modern Cytoscape.js renderer (True) or classic Mermaid (False)
+                True - Interactive graph with Cytoscape.js, TailwindCSS, side panel
+                False - Classic Mermaid-based static diagram
 
     Returns:
         Configured FlowTracker instance
@@ -65,6 +70,7 @@ def setup(
         ...     stats_variable="age",
         ...     stats_types=["min", "max", "mean", "std", "histogram"],
         ...     scatter_variables=("age", "result_value"),
+        ...     modern=True,
         ... )
     """
     global _active_tracker
@@ -76,6 +82,7 @@ def setup(
         stats_types=stats_types,
         scatter_variables=scatter_variables,
         theme=theme,
+        modern=modern,
     )
 
     if auto_intercept:
@@ -101,6 +108,7 @@ class FlowTracker:
         stats_types: list[str] | None = None,
         scatter_variables: tuple[str, str] | None = None,
         theme: str = "default",
+        modern: bool = True,
     ):
         """
         Initialize the FlowTracker.
@@ -112,6 +120,7 @@ class FlowTracker:
             stats_types: Stat types for stats_variable
             scatter_variables: Tuple of (x_col, y_col) for scatter plot (HTML only)
             theme: Color theme
+            modern: Use modern Cytoscape.js renderer (True) or Mermaid (False)
         """
         self.track_row_count = track_row_count
         self.track_variables = track_variables or {}
@@ -119,6 +128,7 @@ class FlowTracker:
         self.stats_types = stats_types or ["min", "max", "mean", "std", "top3_freq", "histogram"]
         self.scatter_variables = scatter_variables
         self.theme = theme
+        self.modern = modern
 
         # Event storage
         self.events: list[FlowEvent] = []
@@ -145,8 +155,9 @@ class FlowTracker:
         self._interceptors_installed = False
         self._original_methods: dict[str, Any] = {}
 
-        # Renderer
+        # Renderers
         self.renderer = MermaidRenderer(theme=theme)
+        self.cytoscape_renderer = CytoscapeRenderer(theme=theme)
 
     def _generate_event_id(self) -> str:
         """Generate a unique event ID."""
@@ -389,11 +400,30 @@ class FlowTracker:
             show_merge_inputs: Show both input DataFrames for merge operations
 
         Returns:
-            Generated Mermaid code
+            Generated content (Mermaid code for .md/.mmd, HTML for .html)
         """
-        # Determine if HTML mode (for embedded histograms/hexbin)
+        # Determine if HTML mode
         is_html = output_path.endswith(".html")
 
+        # Use Cytoscape renderer for HTML if modern mode is enabled
+        if is_html and self.modern:
+            content = self.cytoscape_renderer.render(
+                events=self.events,
+                title=title,
+                direction=direction,
+                include_stats=include_stats,
+                show_removed_data=show_removed_data,
+                show_merge_inputs=show_merge_inputs,
+                histogram_data=self._histogram_data if self._histogram_data else None,
+                hexbin_data=self._hexbin_data if self._hexbin_data else None,
+            )
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            return content
+
+        # Use Mermaid renderer for other formats or if explicitly configured
         mermaid_code = self.renderer.render(
             events=self.events,
             title=title,
