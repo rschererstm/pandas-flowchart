@@ -297,9 +297,7 @@ class MermaidRenderer:
             for i, df_info in enumerate(event.input_dfs):
                 name = df_info.name or df_info.source_file or f"df_{i + 1}"
                 name = self._truncate(name, 25)
-                content_lines.append(
-                    f"➡️ {self._escape(name)}: {df_info.n_rows:,}×{df_info.n_cols}"
-                )
+                content_lines.append(f"➡️ {self._escape(name)}: {df_info.n_rows:,}×{df_info.n_cols}")
 
         # Output DataFrame info
         if event.output_df:
@@ -346,11 +344,8 @@ class MermaidRenderer:
 
         # Variable name with unique count
         if stat.n_unique > 0:
-            if stat.mean_value is None:
-                symbol = "🔑"
-            else:
-                symbol = "⭐"
-                
+            symbol = "🔑" if stat.mean_value is None else "⭐"
+
             lines.append(f"{symbol} {self._escape(stat.name)}: {stat.n_unique:,} unique")
 
         # Numeric statistics

@@ -23,7 +23,7 @@ lint:
 
 # Run linter and fix issues
 lint-fix:
-    ruff check --fix pandas_flow/ tests/ examples/
+    ruff check --fix --unsafe-fixes pandas_flow/ tests/ examples/
 
 # Run formatter check (ruff format)
 format-check:
