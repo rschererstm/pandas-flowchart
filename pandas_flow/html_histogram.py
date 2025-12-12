@@ -119,18 +119,18 @@ def generate_mini_histogram(
     return base64_str
 
 
-def generate_mini_hexbin(
+def generate_mini_scatter(
     x_data: pd.Series | np.ndarray | list,
     y_data: pd.Series | np.ndarray | list,
     width: float = 1.2,
     height: float = 0.8,
     color: str = "#3498db",
-    gridsize: int = 8,
+    point_size: int = 8,
 ) -> str | None:
     """
-    Generate a minimalist hexbin scatter plot as a base64-encoded PNG.
+    Generate a minimalist scatter plot as a base64-encoded PNG.
 
-    Style: Simple hexagon bins, no axes, very compact.
+    Style: Simple scatter with blue dots, no axes, very compact.
     Designed to fit inside Mermaid node labels.
 
     Args:
@@ -138,8 +138,8 @@ def generate_mini_hexbin(
         y_data: Y-axis data
         width: Figure width in inches
         height: Figure height in inches
-        color: Colormap base color
-        gridsize: Number of hexagons across
+        color: Point color (same blue as histogram)
+        point_size: Size of scatter points
 
     Returns:
         Base64-encoded PNG string, or None if not available
@@ -172,18 +172,8 @@ def generate_mini_hexbin(
     fig.patch.set_alpha(0)
     ax.patch.set_alpha(0)
 
-    # Create custom colormap from color
-    from matplotlib.colors import LinearSegmentedColormap
-
-    # Parse hex color to RGB
-    hex_color = color.lstrip("#")
-    r, g, b = tuple(int(hex_color[i : i + 2], 16) / 255 for i in (0, 2, 4))
-
-    # Light to dark gradient
-    cmap = LinearSegmentedColormap.from_list("custom", [(1, 1, 1, 0.1), (r, g, b, 0.8)])
-
-    # Plot hexbin
-    ax.hexbin(x_clean, y_clean, gridsize=gridsize, cmap=cmap, edgecolors="none")
+    # Plot scatter with blue dots
+    ax.scatter(x_clean, y_clean, c=color, s=point_size, alpha=0.6, edgecolors="none")
 
     # Remove all axes, spines, ticks
     ax.set_axis_off()
@@ -207,6 +197,16 @@ def generate_mini_hexbin(
     plt.close(fig)
 
     return base64_str
+
+
+# Keep backward compatibility alias
+def generate_mini_hexbin(
+    x_data: pd.Series | np.ndarray | list,
+    y_data: pd.Series | np.ndarray | list,
+    **kwargs,
+) -> str | None:
+    """Backward compatibility alias for generate_mini_scatter."""
+    return generate_mini_scatter(x_data, y_data, **kwargs)
 
 
 def generate_histogram_img_tag(

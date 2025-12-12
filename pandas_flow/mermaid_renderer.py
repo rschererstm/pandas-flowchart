@@ -109,6 +109,7 @@ class MermaidRenderer:
         self.theme_name = theme
         self._html_mode = False
         self._histogram_data: dict[str, Any] = {}  # Store data for histogram generation
+        self._hexbin_data: dict[str, tuple[list, list]] = {}  # Store data for hexbin generation
 
     def render(
         self,
@@ -121,6 +122,7 @@ class MermaidRenderer:
         show_merge_inputs: bool = True,
         html_mode: bool = False,
         histogram_data: dict[str, pd.Series | list] | None = None,
+        hexbin_data: dict[str, tuple[list, list]] | None = None,
     ) -> str:
         """
         Render events as Mermaid flowchart code.
@@ -133,14 +135,16 @@ class MermaidRenderer:
             include_stats: Whether to include statistics in boxes
             show_removed_data: Show boxes for data removed by filter/drop operations
             show_merge_inputs: Show both input DataFrames for merge operations
-            html_mode: If True, embed mini histogram images in node labels
+            html_mode: If True, embed mini histogram/hexbin images in node labels
             histogram_data: Dict of {variable_name: data_series} for histogram generation
+            hexbin_data: Dict of {name: (x_data, y_data)} for hexbin scatter generation
 
         Returns:
             Mermaid flowchart code string
         """
         self._html_mode = html_mode
         self._histogram_data = histogram_data or {}
+        self._hexbin_data = hexbin_data or {}
 
         if not events:
             return self._empty_diagram(title, direction)
@@ -360,6 +364,12 @@ class MermaidRenderer:
         elif stat.histogram:
             lines.append(f"📊 {stat.histogram}")
 
+        # Hexbin scatter - only in HTML mode
+        if self._html_mode and self._hexbin_data:
+            hexbin_img = self._generate_inline_hexbin()
+            if hexbin_img:
+                lines.append(hexbin_img)
+
         # Top values (truncated)
         if stat.top_values:
             top_items = []
@@ -388,6 +398,31 @@ class MermaidRenderer:
                 alt_text=f"{var_name} distribution",
                 width_px=80,
                 height_px=25,
+            )
+        except ImportError:
+            return None
+
+    def _generate_inline_hexbin(self) -> str | None:
+        """Generate an inline hexbin scatter image tag for HTML mode."""
+        if not self._hexbin_data:
+            return None
+
+        try:
+            from .html_histogram import generate_hexbin_img_tag
+
+            # Get the first (and usually only) hexbin entry
+            hexbin_name = next(iter(self._hexbin_data))
+            x_data, y_data = self._hexbin_data[hexbin_name]
+
+            if not x_data or not y_data or len(x_data) < 3:
+                return None
+
+            return generate_hexbin_img_tag(
+                x_data,
+                y_data,
+                alt_text=hexbin_name.replace("_", " "),
+                width_px=80,
+                height_px=50,
             )
         except ImportError:
             return None
@@ -821,6 +856,7 @@ class MermaidRenderer:
         mermaid.initialize({{
             startOnLoad: true,
             theme: '{"dark" if self.theme_name == "dark" else "default"}',
+            maxTextSize: 500000,
             flowchart: {{
                 useMaxWidth: true,
                 htmlLabels: true,

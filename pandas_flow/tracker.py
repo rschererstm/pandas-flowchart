@@ -33,6 +33,7 @@ def setup(
     track_variables: dict[str, str] | None = None,
     stats_variable: str | None = None,
     stats_types: list[str] | None = None,
+    scatter_variables: tuple[str, str] | None = None,
     auto_intercept: bool = True,
     theme: str = "default",
 ) -> FlowTracker:
@@ -46,6 +47,8 @@ def setup(
         stats_variable: Variable for detailed statistics (min, max, mean, etc.)
         stats_types: List of stat types for stats_variable
                     Options: "min", "max", "mean", "std", "top3_freq", "histogram"
+        scatter_variables: Tuple of (x_column, y_column) for scatter plot
+                         Only rendered in HTML mode
         auto_intercept: Whether to automatically intercept pandas operations
         theme: Color theme for the flowchart ("default", "dark", "light")
 
@@ -61,6 +64,7 @@ def setup(
         ...     },
         ...     stats_variable="age",
         ...     stats_types=["min", "max", "mean", "std", "histogram"],
+        ...     scatter_variables=("age", "result_value"),
         ... )
     """
     global _active_tracker
@@ -70,6 +74,7 @@ def setup(
         track_variables=track_variables,
         stats_variable=stats_variable,
         stats_types=stats_types,
+        scatter_variables=scatter_variables,
         theme=theme,
     )
 
@@ -94,6 +99,7 @@ class FlowTracker:
         track_variables: dict[str, str] | None = None,
         stats_variable: str | None = None,
         stats_types: list[str] | None = None,
+        scatter_variables: tuple[str, str] | None = None,
         theme: str = "default",
     ):
         """
@@ -104,12 +110,14 @@ class FlowTracker:
             track_variables: Dict of variable_name -> stat_type
             stats_variable: Variable for detailed stats
             stats_types: Stat types for stats_variable
+            scatter_variables: Tuple of (x_col, y_col) for scatter plot (HTML only)
             theme: Color theme
         """
         self.track_row_count = track_row_count
         self.track_variables = track_variables or {}
         self.stats_variable = stats_variable
         self.stats_types = stats_types or ["min", "max", "mean", "std", "top3_freq", "histogram"]
+        self.scatter_variables = scatter_variables
         self.theme = theme
 
         # Event storage
@@ -129,6 +137,9 @@ class FlowTracker:
 
         # Histogram data storage (for HTML output)
         self._histogram_data: dict[str, pd.Series | list] = {}
+
+        # Hexbin data storage (for HTML output)
+        self._hexbin_data: dict[str, tuple[list, list]] = {}  # name -> (x_data, y_data)
 
         # Interceptor state
         self._interceptors_installed = False
@@ -227,6 +238,17 @@ class FlowTracker:
             self._histogram_data[self.stats_variable] = (
                 output_df[self.stats_variable].dropna().tolist()
             )
+
+        # Store hexbin data (for HTML output)
+        if self.scatter_variables:
+            x_col, y_col = self.scatter_variables
+            if x_col in output_df.columns and y_col in output_df.columns:
+                # Get aligned non-null data
+                valid_mask = output_df[x_col].notna() & output_df[y_col].notna()
+                x_data = output_df.loc[valid_mask, x_col].tolist()
+                y_data = output_df.loc[valid_mask, y_col].tolist()
+                hexbin_name = f"{x_col}_vs_{y_col}"
+                self._hexbin_data[hexbin_name] = (x_data, y_data)
 
         # Create event
         event = FlowEvent(
@@ -369,7 +391,7 @@ class FlowTracker:
         Returns:
             Generated Mermaid code
         """
-        # Determine if HTML mode (for embedded histograms)
+        # Determine if HTML mode (for embedded histograms/hexbin)
         is_html = output_path.endswith(".html")
 
         mermaid_code = self.renderer.render(
@@ -382,6 +404,7 @@ class FlowTracker:
             show_merge_inputs=show_merge_inputs,
             html_mode=is_html,
             histogram_data=self._histogram_data if is_html and self._histogram_data else None,
+            hexbin_data=self._hexbin_data if is_html and self._hexbin_data else None,
         )
 
         # Determine output format
