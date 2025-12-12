@@ -4,6 +4,8 @@
 
 A Python library that integrates with pandas to automatically track data transformation operations and generate visual flowcharts using HTML or Mermaid diagrams.
 
+[![Medium](https://img.shields.io/badge/Medium-%23121212.svg?style=for-the-badge&logo=Medium&logoColor=white)](https://medium.com/@rafaelscherer.stm/stop-trying-to-decipher-your-pandas-pipelines-e0bfe56aa3d7) [![PyPI](https://img.shields.io/pypi/v/pandas-flowchart?style=for-the-badge)](https://pypi.org/project/pandas-flowchart/) [![Python](https://img.shields.io/pypi/pyversions/pandas-flowchart?style=for-the-badge)](https://pypi.org/project/pandas-flowchart/) [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+
 ## Features
 
 - **Automatic Operation Tracking**: Intercepts common pandas operations (merge, filter, assign, drop, groupby, etc.)
