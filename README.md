@@ -186,13 +186,13 @@ with pandas_flow.setup(track_variables={"id": "n_unique"}) as flow:
 
 ```mermaid
 flowchart TB
-    op_1[/"<b>Read CSV</b><br/><i>Load data from patients.csv</i><br/>📤 10,000 rows × 5 cols<br/>──────────────────────<br/>🔑 patient_id: 8,500 unique<br/>mean=45.30 [18.0–92.0]<br/>📊 ▁▂▄█▆▃▂▁"/]
+    op_1[/"<b>Read CSV</b><br/><i>Load data from patients.csv</i><br/>⬅️ 10,000 rows × 5 cols<br/>──────────────────────<br/>🔑 patient_id: 8,500 unique<br/>mean=45.30 [18.0–92.0]<br/>📊 ▁▂▄█▆▃▂▁"/]
     
-    op_2[/"<b>Read CSV</b><br/><i>Load data from exams.csv</i><br/>📤 25,000 rows × 8 cols"/]
+    op_2[/"<b>Read CSV</b><br/><i>Load data from exams.csv</i><br/>⬅️ 25,000 rows × 8 cols"/]
     
-    op_3[["<b>Merge (inner)</b><br/><i>INNER join on patient_id</i><br/>📥 patients.csv: 10,000×5<br/>📥 exams.csv: 25,000×8<br/>📤 23,500 rows × 12 cols"]]
+    op_3[["<b>Merge (inner)</b><br/><i>INNER join on patient_id</i><br/>➡️ patients.csv: 10,000×5<br/>➡️ exams.csv: 25,000×8<br/>⬅️ 23,500 rows × 12 cols"]]
     
-    op_4{"<b>Query</b><br/><i>Filter: age >= 18</i><br/>📤 22,100 rows × 12 cols<br/>↓ -1,400 (-6.0%)"}
+    op_4{"<b>Query</b><br/><i>Filter: age >= 18</i><br/>⬅️ 22,100 rows × 12 cols<br/>↓ -1,400 (-6.0%)"}
     
     op_1 --> op_3
     op_2 --> op_3

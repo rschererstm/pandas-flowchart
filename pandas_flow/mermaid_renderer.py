@@ -294,13 +294,13 @@ class MermaidRenderer:
                 name = df_info.name or df_info.source_file or f"df_{i + 1}"
                 name = self._truncate(name, 25)
                 content_lines.append(
-                    f"📥 {self._escape(name)}: {df_info.n_rows:,}×{df_info.n_cols}"
+                    f"➡️ {self._escape(name)}: {df_info.n_rows:,}×{df_info.n_cols}"
                 )
 
         # Output DataFrame info
         if event.output_df:
             content_lines.append(
-                f"📤 {event.output_df.n_rows:,} rows × {event.output_df.n_cols} cols"
+                f"⬅️ {event.output_df.n_rows:,} rows × {event.output_df.n_cols} cols"
             )
 
             # Row change indicator
