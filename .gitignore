@@ -27,3 +27,4 @@ pandas_flow/__pycache__/
 *.html
 *.mmd
 dist/
+*.key
