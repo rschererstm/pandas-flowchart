@@ -11,13 +11,15 @@ A Python library that integrates with pandas to automatically track data transfo
 - **Mini-Histograms**: ASCII sparkline histograms for numeric variables
 - **Multiple Output Formats**: Export to Markdown, HTML, or raw Mermaid syntax
 
-<!DOCTYPE html>
+## Example: Healthcare Data Pipeline
 
+```html
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Healthcare Data Pipeline</title>
+    <title>Example: Healthcare Data Pipeline</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
         * {
@@ -61,7 +63,7 @@ A Python library that integrates with pandas to automatically track data transfo
 </head>
 <body>
     <div class="container">
-        <h1>Healthcare Data Pipeline</h1>
+        <h1>Example: Healthcare Data Pipeline</h1>
         <div class="mermaid">
 flowchart TB
 
@@ -148,7 +150,7 @@ flowchart TB
 
 </body>
 </html>
-
+```
 
 ## Installation
 
@@ -321,28 +323,6 @@ with pandas_flow.setup(track_variables={"id": "n_unique"}) as flow:
 ```
 
 ## Output Example
-
-### Mermaid Flowchart
-
-```mermaid
-flowchart TB
-    op_1[/"<b>Read CSV</b><br/><i>Load data from patients.csv</i><br/>⬅️ 10,000 rows × 5 cols<br/>──────────────────────<br/>🔑 patient_id: 8,500 unique<br/>mean=45.30 [18.0–92.0]<br/>📊 ▁▂▄█▆▃▂▁"/]
-  
-    op_2[/"<b>Read CSV</b><br/><i>Load data from exams.csv</i><br/>⬅️ 25,000 rows × 8 cols"/]
-  
-    op_3[["<b>Merge (inner)</b><br/><i>INNER join on patient_id</i><br/>➡️ patients.csv: 10,000×5<br/>➡️ exams.csv: 25,000×8<br/>⬅️ 23,500 rows × 12 cols"]]
-  
-    op_4{"<b>Query</b><br/><i>Filter: age >= 18</i><br/>⬅️ 22,100 rows × 12 cols<br/>↓ -1,400 (-6.0%)"}
-  
-    op_1 --> op_3
-    op_2 --> op_3
-    op_3 -.-> op_4
-  
-    style op_1 fill:#9ca3af,stroke:#6b7280,color:#000000
-    style op_2 fill:#9ca3af,stroke:#6b7280,color:#000000
-    style op_3 fill:#6dc993,stroke:#4ca36d,color:#000000
-    style op_4 fill:#7cb3d9,stroke:#5691b7,color:#000000
-```
 
 ### Box Contents
 
