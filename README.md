@@ -1,5 +1,7 @@
 # pandas-flowchart 📊
 
+![pandas-flowchart logo](pandas_flow/imgs/logo.jpg)
+
 A Python library that integrates with pandas to automatically track data transformation operations and generate visual flowcharts using HTML or Mermaid diagrams.
 
 ## Features
