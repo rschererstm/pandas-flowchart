@@ -17,11 +17,19 @@ A Python library that integrates with pandas to automatically track data transfo
 
 ## Example: Healthcare Data Pipeline
 
-This example tracks a realistic analytics workflow for a medical provider: loading patient/exam records, merging them on `patient_id`, filtering for active adults, deriving age groups, deduplicating visits, and 	then branching off into staged summaries before rendering the final Mermaid diagram shown below.
+This example tracks a realistic analytics workflow for a medical provider: loading patient/exam records, merging them on `patient_id`, filtering for active adults, deriving age groups, deduplicating visits, and then branching off into staged summaries before rendering the diagrams shown below.
+
+### Rendering Modes
+
+`modern=True` (the default) renders an interactive Cytoscape.js view with Tailwind-styled cards, side panels, and live statistics (see the modern example above). Set `modern=False` to fall back to the classic Mermaid diagram, which renders the same sequence as a static graph (the classic screenshot follows the modern one). Both modes draw from the same operation tracking pipeline and only change how the diagram is hosted/rendered.
+
+[[modern_image](https://raw.githubusercontent.com/rschererstm/pandas-flowchart/refs/heads/main/pandas_flow/imgs/modern.png)]
+
+![Modern Healthcare Flowchart](https://raw.githubusercontent.com/rschererstm/pandas-flowchart/refs/heads/main/pandas_flow/imgs/modern.png)
 
 [[image_link](https://raw.githubusercontent.com/rschererstm/pandas-flowchart/refs/heads/main/pandas_flow/imgs/healthcare_pipeline.png)]
 
-![Healthcare Data Pipeline](pandas_flow/imgs/healthcare_pipeline.png)
+![Healthcare Data Pipeline](https://raw.githubusercontent.com/rschererstm/pandas-flowchart/refs/heads/main/pandas_flow/imgs/healthcare_pipeline.png)
 
 ## Installation
 
