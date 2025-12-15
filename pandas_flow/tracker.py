@@ -35,6 +35,10 @@ def setup(
     stats_variable: str | None = None,
     stats_types: list[str] | None = None,
     scatter_variables: tuple[str, str] | None = None,
+    max_hist_points: int | None = 50_000,
+    max_scatter_points: int | None = 20_000,
+    track_memory_usage: bool = False,
+    deep_memory: bool = False,
     auto_intercept: bool = True,
     theme: str = "default",
     modern: bool = True,
@@ -51,6 +55,10 @@ def setup(
                     Options: "min", "max", "mean", "std", "top3_freq", "histogram"
         scatter_variables: Tuple of (x_column, y_column) for scatter plot
                          Only rendered in HTML mode
+        max_hist_points: Max # of points stored for histogram (HTML). None disables sampling.
+        max_scatter_points: Max # of points stored for scatter/hexbin (HTML). None disables sampling.
+        track_memory_usage: Whether to compute DataFrame memory usage (can be expensive).
+        deep_memory: Use deep=True for memory usage (expensive on object columns).
         auto_intercept: Whether to automatically intercept pandas operations
         theme: Color theme for the flowchart ("default", "dark", "light")
         modern: Use modern Cytoscape.js renderer (True) or classic Mermaid (False)
@@ -81,6 +89,10 @@ def setup(
         stats_variable=stats_variable,
         stats_types=stats_types,
         scatter_variables=scatter_variables,
+        max_hist_points=max_hist_points,
+        max_scatter_points=max_scatter_points,
+        track_memory_usage=track_memory_usage,
+        deep_memory=deep_memory,
         theme=theme,
         modern=modern,
     )
@@ -107,6 +119,10 @@ class FlowTracker:
         stats_variable: str | None = None,
         stats_types: list[str] | None = None,
         scatter_variables: tuple[str, str] | None = None,
+        max_hist_points: int | None = 50_000,
+        max_scatter_points: int | None = 20_000,
+        track_memory_usage: bool = False,
+        deep_memory: bool = False,
         theme: str = "default",
         modern: bool = True,
     ):
@@ -119,6 +135,10 @@ class FlowTracker:
             stats_variable: Variable for detailed stats
             stats_types: Stat types for stats_variable
             scatter_variables: Tuple of (x_col, y_col) for scatter plot (HTML only)
+            max_hist_points: Max # of points stored for histogram (HTML). None disables sampling.
+            max_scatter_points: Max # of points stored for scatter/hexbin (HTML). None disables sampling.
+            track_memory_usage: Whether to compute DataFrame memory usage.
+            deep_memory: Whether to compute deep memory usage (expensive).
             theme: Color theme
             modern: Use modern Cytoscape.js renderer (True) or Mermaid (False)
         """
@@ -129,6 +149,12 @@ class FlowTracker:
         self.scatter_variables = scatter_variables
         self.theme = theme
         self.modern = modern
+
+        # Performance knobs
+        self.max_hist_points = max_hist_points
+        self.max_scatter_points = max_scatter_points
+        self.track_memory_usage = track_memory_usage
+        self.deep_memory = deep_memory
 
         # Event storage
         self.events: list[FlowEvent] = []
@@ -200,7 +226,11 @@ class FlowTracker:
             n_cols=len(df.columns),
             columns=list(df.columns),
             dtypes={str(col): str(dtype) for col, dtype in df.dtypes.items()},
-            memory_usage=df.memory_usage(deep=True).sum(),
+            memory_usage=(
+                int(df.memory_usage(deep=self.deep_memory).sum())
+                if self.track_memory_usage
+                else 0
+                ),
         )
 
     def _find_df_name(self, df: pd.DataFrame) -> str | None:
@@ -246,9 +276,11 @@ class FlowTracker:
 
         # Store histogram data for stats_variable (for HTML output)
         if self.stats_variable and self.stats_variable in output_df.columns:
-            self._histogram_data[self.stats_variable] = (
-                output_df[self.stats_variable].dropna().tolist()
-            )
+            s = output_df[self.stats_variable].dropna()
+            if self.max_hist_points is not None and len(s) > self.max_hist_points:
+                # deterministic sampling for stable outputs
+                s = s.sample(self.max_hist_points, random_state=0)
+            self._histogram_data[self.stats_variable] = s.tolist()
 
         # Store hexbin data (for HTML output)
         if self.scatter_variables:
@@ -256,8 +288,11 @@ class FlowTracker:
             if x_col in output_df.columns and y_col in output_df.columns:
                 # Get aligned non-null data
                 valid_mask = output_df[x_col].notna() & output_df[y_col].notna()
-                x_data = output_df.loc[valid_mask, x_col].tolist()
-                y_data = output_df.loc[valid_mask, y_col].tolist()
+                sub = output_df.loc[valid_mask, [x_col, y_col]]
+                if self.max_scatter_points is not None and len(sub) > self.max_scatter_points:
+                    sub = sub.sample(self.max_scatter_points, random_state=0)
+                x_data = sub[x_col].tolist()
+                y_data = sub[y_col].tolist()
                 hexbin_name = f"{x_col}_vs_{y_col}"
                 self._hexbin_data[hexbin_name] = (x_data, y_data)
 
@@ -376,6 +411,8 @@ class FlowTracker:
         self.events.clear()
         self._event_counter = 0
         self._df_registry.clear()
+        self._histogram_data.clear()
+        self._hexbin_data.clear() 
 
     def render(
         self,
@@ -505,7 +542,7 @@ class FlowTracker:
                     f"   → {event.output_df.n_rows:,} rows × {event.output_df.n_cols} cols"
                 )
             for stat in event.tracked_stats:
-                if stat.n_unique > 0:
+                if stat.n_unique is not None and stat.n_unique > 0:
                     lines.append(f"   • {stat.name}: {stat.n_unique:,} unique")
             lines.append("")
 

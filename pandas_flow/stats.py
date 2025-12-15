@@ -73,20 +73,32 @@ class StatsCalculator:
 
         return stats_list
 
-    def _compute_variable_stats(
-        self, df: pd.DataFrame, var_name: str, stat_type: str
-    ) -> TrackedVariableStats | None:
-        """Compute basic stats for a tracked variable."""
+    def _compute_variable_stats(self, df: pd.DataFrame, var_name: str, stat_type: str) -> TrackedVariableStats | None:
         if var_name not in df.columns:
             return None
 
-        series = df[var_name]
+        s = df[var_name]
+        n_total = len(s)
+
+        n_non_null = None
+        n_unique = None
+
+        if stat_type == "n_total":
+            pass
+        elif stat_type == "n_non_null":
+            n_non_null = int(s.notna().sum())
+        elif stat_type == "n_unique":
+            n_unique = int(s.nunique(dropna=True))
+        else:
+            # fall back: compute the three, or raise ValueError
+            n_non_null = int(s.notna().sum())
+            n_unique = int(s.nunique(dropna=True))
 
         return TrackedVariableStats(
             name=var_name,
-            n_total=len(series),
-            n_non_null=series.notna().sum(),
-            n_unique=series.nunique(),
+            n_total=n_total,
+            n_non_null=n_non_null,
+            n_unique=n_unique,
         )
 
     def _compute_extended_stats(
@@ -193,8 +205,8 @@ class StatsCalculator:
         """
         lines = []
 
-        # Basic count info
-        if stats.n_unique > 0:
+        # Basic count info with avoidance of TypeError
+        if stats.n_unique is not None:
             lines.append(f"{stats.name}: {stats.n_unique:,} unique")
         else:
             lines.append(f"{stats.name}: {stats.n_non_null:,} values")
