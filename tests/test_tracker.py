@@ -47,6 +47,144 @@ class TestFlowTrackerSetup:
             flow = pandas_flow.setup(theme=theme, auto_intercept=False)
             assert flow.theme == theme
 
+class TestNewTrackerPerformanceKnobs:
+    def test_histogram_data_is_downsampled(self):
+        flow = FlowTracker(stats_variable="value", max_hist_points=100, auto_intercept=False)
+        df = pd.DataFrame({"value": np.arange(10_000)})
+
+        flow.record_operation(
+            operation_type=OperationType.CUSTOM,
+            operation_name="Big Op",
+            input_dfs=[df],
+            output_df=df,
+        )
+
+        assert "value" in flow._histogram_data
+        assert isinstance(flow._histogram_data["value"], list)
+        assert len(flow._histogram_data["value"]) <= 100
+
+    def test_scatter_data_is_downsampled(self):
+        flow = FlowTracker(
+            scatter_variables=("x", "y"),
+            max_scatter_points=200,
+            auto_intercept=False,
+        )
+        df = pd.DataFrame({"x": np.arange(50_000), "y": np.arange(50_000)})
+
+        flow.record_operation(
+            operation_type=OperationType.CUSTOM,
+            operation_name="Scatter Op",
+            input_dfs=[df],
+            output_df=df,
+        )
+
+        key = "x_vs_y"
+        assert key in flow._hexbin_data
+        x_data, y_data = flow._hexbin_data[key]
+        assert len(x_data) == len(y_data)
+        assert len(x_data) <= 200
+
+    def test_clear_clears_cached_plot_data(self):
+        flow = FlowTracker(
+            stats_variable="value",
+            scatter_variables=("x", "y"),
+            max_hist_points=100,
+            max_scatter_points=100,
+            auto_intercept=False,
+        )
+        df = pd.DataFrame({"value": np.arange(1000), "x": np.arange(1000), "y": np.arange(1000)})
+
+        flow.record_operation(
+            operation_type=OperationType.CUSTOM,
+            operation_name="Op",
+            input_dfs=[df],
+            output_df=df,
+        )
+
+        assert flow._histogram_data
+        assert flow._hexbin_data
+
+        flow.clear()
+
+        assert flow._histogram_data == {}
+        assert flow._hexbin_data == {}
+        assert flow.events == []
+
+class TestMemoryUsageTracking:
+    def test_memory_usage_disabled_defaults_to_zero(self):
+        flow = FlowTracker(track_memory_usage=False, auto_intercept=False)
+        df = pd.DataFrame({"a": [1, 2, 3]})
+
+        info = flow._get_df_info(df)
+        assert hasattr(info, "memory_usage")
+        assert info.memory_usage == 0
+
+    def test_memory_usage_enabled_is_positive(self):
+        flow = FlowTracker(track_memory_usage=True, deep_memory=False, auto_intercept=False)
+        df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+
+        info = flow._get_df_info(df)
+        assert info.memory_usage > 0
+
+class TestStatTypeHonored:
+    def test_nunique_not_called_when_tracking_n_total(self, monkeypatch):
+        # Make nunique blow up if called
+        original = pd.Series.nunique
+
+        def boom(*args, **kwargs):
+            raise AssertionError("nunique() should not be called for stat_type='n_total'")
+
+        monkeypatch.setattr(pd.Series, "nunique", boom)
+
+        flow = FlowTracker(track_variables={"a": "n_total"}, auto_intercept=False)
+        df = pd.DataFrame({"a": [1, 2, 2, 3]})
+
+        flow.record_operation(
+            operation_type=OperationType.CUSTOM,
+            operation_name="Op",
+            input_dfs=[df],
+            output_df=df,
+        )
+
+        # restore (monkeypatch will restore automatically, but leaving this for clarity)
+        monkeypatch.setattr(pd.Series, "nunique", original)
+
+    def test_nunique_called_when_tracking_n_unique(self, monkeypatch):
+        called = {"flag": False}
+        original = pd.Series.nunique
+
+        def wrapped(self, *args, **kwargs):
+            called["flag"] = True
+            return original(self, *args, **kwargs)
+
+        monkeypatch.setattr(pd.Series, "nunique", wrapped)
+
+        flow = FlowTracker(track_variables={"a": "n_unique"}, auto_intercept=False)
+        df = pd.DataFrame({"a": [1, 2, 2, 3]})
+
+        flow.record_operation(
+            operation_type=OperationType.CUSTOM,
+            operation_name="Op",
+            input_dfs=[df],
+            output_df=df,
+        )
+
+        assert called["flag"] is True
+ 
+class TestSummaryWithOptionalStats:
+    def test_summary_does_not_crash_with_none_n_unique(self):
+        flow = FlowTracker(track_variables={"a": "n_total"}, auto_intercept=False)
+        df = pd.DataFrame({"a": [1, 2, 3]})
+
+        flow.record_operation(
+            operation_type=OperationType.CUSTOM,
+            operation_name="Op",
+            input_dfs=[df],
+            output_df=df,
+        )
+
+        text = flow.summary()
+        assert "Total operations" in text
 
 class TestEventRecording:
     """Tests for event recording functionality."""
