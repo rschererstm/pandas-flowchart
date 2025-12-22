@@ -80,8 +80,8 @@ class StatsCalculator:
         s = df[var_name]
         n_total = len(s)
 
-        n_non_null = None
-        n_unique = None
+        n_non_null = 0
+        n_unique = 0
 
         if stat_type == "n_total":
             pass
@@ -113,8 +113,8 @@ class StatsCalculator:
         stats = TrackedVariableStats(
             name=var_name,
             n_total=len(series),
-            n_non_null=series.notna().sum(),
-            n_unique=series.nunique(),
+            n_non_null=int(series.notna().sum()),
+            n_unique=int(series.nunique()),
         )
 
         # Numeric stats

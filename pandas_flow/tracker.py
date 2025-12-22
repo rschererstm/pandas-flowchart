@@ -412,7 +412,7 @@ class FlowTracker:
         self._event_counter = 0
         self._df_registry.clear()
         self._histogram_data.clear()
-        self._hexbin_data.clear() 
+        self._hexbin_data.clear()
 
     def render(
         self,

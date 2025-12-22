@@ -49,7 +49,7 @@ class TestFlowTrackerSetup:
 
 class TestNewTrackerPerformanceKnobs:
     def test_histogram_data_is_downsampled(self):
-        flow = FlowTracker(stats_variable="value", max_hist_points=100, auto_intercept=False)
+        flow = FlowTracker(stats_variable="value", max_hist_points=100)
         df = pd.DataFrame({"value": np.arange(10_000)})
 
         flow.record_operation(
@@ -67,7 +67,6 @@ class TestNewTrackerPerformanceKnobs:
         flow = FlowTracker(
             scatter_variables=("x", "y"),
             max_scatter_points=200,
-            auto_intercept=False,
         )
         df = pd.DataFrame({"x": np.arange(50_000), "y": np.arange(50_000)})
 
@@ -90,7 +89,6 @@ class TestNewTrackerPerformanceKnobs:
             scatter_variables=("x", "y"),
             max_hist_points=100,
             max_scatter_points=100,
-            auto_intercept=False,
         )
         df = pd.DataFrame({"value": np.arange(1000), "x": np.arange(1000), "y": np.arange(1000)})
 
@@ -112,7 +110,7 @@ class TestNewTrackerPerformanceKnobs:
 
 class TestMemoryUsageTracking:
     def test_memory_usage_disabled_defaults_to_zero(self):
-        flow = FlowTracker(track_memory_usage=False, auto_intercept=False)
+        flow = FlowTracker(track_memory_usage=False)
         df = pd.DataFrame({"a": [1, 2, 3]})
 
         info = flow._get_df_info(df)
@@ -120,7 +118,7 @@ class TestMemoryUsageTracking:
         assert info.memory_usage == 0
 
     def test_memory_usage_enabled_is_positive(self):
-        flow = FlowTracker(track_memory_usage=True, deep_memory=False, auto_intercept=False)
+        flow = FlowTracker(track_memory_usage=True, deep_memory=False)
         df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
 
         info = flow._get_df_info(df)
@@ -136,7 +134,7 @@ class TestStatTypeHonored:
 
         monkeypatch.setattr(pd.Series, "nunique", boom)
 
-        flow = FlowTracker(track_variables={"a": "n_total"}, auto_intercept=False)
+        flow = FlowTracker(track_variables={"a": "n_total"})
         df = pd.DataFrame({"a": [1, 2, 2, 3]})
 
         flow.record_operation(
@@ -159,7 +157,7 @@ class TestStatTypeHonored:
 
         monkeypatch.setattr(pd.Series, "nunique", wrapped)
 
-        flow = FlowTracker(track_variables={"a": "n_unique"}, auto_intercept=False)
+        flow = FlowTracker(track_variables={"a": "n_unique"})
         df = pd.DataFrame({"a": [1, 2, 2, 3]})
 
         flow.record_operation(
@@ -170,10 +168,10 @@ class TestStatTypeHonored:
         )
 
         assert called["flag"] is True
- 
+
 class TestSummaryWithOptionalStats:
     def test_summary_does_not_crash_with_none_n_unique(self):
-        flow = FlowTracker(track_variables={"a": "n_total"}, auto_intercept=False)
+        flow = FlowTracker(track_variables={"a": "n_total"})
         df = pd.DataFrame({"a": [1, 2, 3]})
 
         flow.record_operation(
